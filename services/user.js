@@ -11,25 +11,27 @@ const sendRequest = async (req, res) => {
 }
 
 const checkOutgoingRequest = async (req, res) => {
-    let followRequests = await User.findOne({_id:req.user._id}).populate('outgoingRequests');
+    let followRequests = await User.findOne({_id:req.user._id})
     res.send({requests:followRequests.outgoingRequests})
 }
 
 const checkIncomingRequest = async (req, res) => {
-    let followRequests = await User.findOne({_id:req.user._id}).populate('incomingRequests');
+    let followRequests = await User.findOne({_id:req.user._id})
     res.send({requests:followRequests.incomingRequests})
 }
 
 const cancelIncomingRequest = async (req, res) => {
     let request = req.body.request
     await User.update({_id:req.user._id}, {$pull:{incomingRequests:request}})
+    await User.update({_id:request}, {$pull:{outgoingRequests:req.user._id}})
+    res.send({message:"success"})
 }
 
 const acceptIncomingRequest = async (req, res) => {
     let request = req.body.request
-    console.log("request", request)
-    await User.update({_id:req.user._id}, {$pull:{incomingRequests:request}}, {$push:{followers:request}})
-    await User.update({_id:request}, {$push:{follows:req.user._id}}, {$pull:{outgoingRequests:req.user._id}})
+    await User.update({_id:req.user._id}, {$pull:{incomingRequests:request}, $push:{followers:request}})
+    await User.update({_id:request}, {$push:{follows:req.user._id}, $pull:{outgoingRequests:req.user._id}})
+    res.send({message:"success"})
 }
 
 module.exports = {
